@@ -12,6 +12,8 @@
 #include <stdexcept>
 #include <string>
 #include <array>
+#include <vector>
+#include <sstream>
 
 void read_tegrastats();
 

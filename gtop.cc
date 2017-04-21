@@ -34,8 +34,18 @@ void read_tegrastats() {
   if (!pipe) throw std::runtime_error("popen() failed!");
   while (!feof(pipe.get())) {
     if (fgets(buffer.data(), 128, pipe.get()) != NULL){
-      //result += buffer.data();
-      //std::cout << buffer.data() << std::endl << std::endl;
+
+      std::vector<std::string> result;
+      std::stringstream ss(buffer.data());
+
+      while( ss.good() )
+      {
+        std::string substr;
+        getline( ss, substr, ' ' );
+        result.push_back( substr );
+      }
+
+      std::cout << result[15] << std::endl;
     }
   }
 }
