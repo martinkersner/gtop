@@ -14,12 +14,15 @@
 #include <array>
 #include <vector>
 #include <sstream>
+#include <mutex>
+#include <condition_variable>
 
-#define BUFFER_SIZE 128
+const int BUFFER_SIZE = 256;
+const int BAR_OFFSET = 10;
 
 struct tegrastats {
-  int ram_usage;
-  int ram_max;
+  int mem_usage;
+  int mem_max;
 
   int cpu0_usage;
   int cpu1_usage;
@@ -33,8 +36,13 @@ struct tegrastats {
 
 void read_tegrastats();
 tegrastats parse_tegrastats(const char *);
+
 void get_cpu_stats(tegrastats &, const std::string &);
 void get_gpu_stats(tegrastats &, const std::string &);
-void get_ram_stats(tegrastats &, const std::string &);
+void get_mem_stats(tegrastats &, const std::string &);
+
+void display_cpu_stats(const int, const tegrastats &);
+void display_gpu_stats(const int, const tegrastats &);
+void display_mem_stats(const int, const tegrastats &);
 
 #endif // GTOP_HH_
