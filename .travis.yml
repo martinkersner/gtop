@@ -1,0 +1,9 @@
+language: c++
+
+compiler:
+  - g++
+
+os:
+  - linux
+
+script: make
