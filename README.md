@@ -20,4 +20,4 @@ alias gtop="sudo ./$PATH_TO_GTOP_DIRECTORY/gtop"
 
 ## License
 
-GNU General Public License, version 2 (GPL-2.0)
+GNU General Public License, version 3 (GPL-3.0)
