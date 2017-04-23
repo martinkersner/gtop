@@ -8,8 +8,10 @@
 std::mutex m;
 std::condition_variable cv;
 tegrastats t_stats;
+
 bool processed = false;
-bool ready = false;
+bool ready     = false;
+bool finished  = false;
 
 int main() {	
   std::thread t(read_tegrastats); 
@@ -22,7 +24,6 @@ int main() {
 	init_pair(WHITE_BLACK, COLOR_WHITE, COLOR_BLACK);
 	init_pair(GREEN_BLACK, COLOR_GREEN, COLOR_BLACK);
 
-  char ch;
   while (1) {
     {
       std::lock_guard<std::mutex> lk(m);
@@ -47,10 +48,14 @@ int main() {
 
 		refresh();
 
-    ch = getch();
-		if (ch > 0)
+		if (getch() == 'q')
 			break;
 	}
+
+  { 
+    std::lock_guard<std::mutex> lk(m);
+    finished = true;
+  }
 
 	t.join();
 	endwin();
@@ -59,7 +64,7 @@ int main() {
 }
 
 void read_tegrastats() {
-  std::array<char, BUFFER_SIZE> buffer;
+  std::array<char, STATS_BUFFER_SIZE> buffer;
   std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
 
   if (!pipe)
@@ -67,8 +72,15 @@ void read_tegrastats() {
 
   while (!feof(pipe.get())) {
 
-    if (fgets(buffer.data(), BUFFER_SIZE, pipe.get()) != NULL) {
+    if (fgets(buffer.data(), STATS_BUFFER_SIZE, pipe.get()) != NULL) {
       std::unique_lock<std::mutex> lk(m);
+
+      // terminate reading tegrastats
+      if (finished) {
+        lk.unlock();
+        break;
+      }
+
       cv.wait(lk, []{ return ready; });
       ready = false;
       t_stats = parse_tegrastats(buffer.data());
@@ -86,18 +98,6 @@ tegrastats parse_tegrastats(const char * buffer) {
   get_mem_stats(ts, stats.at(1));
   get_cpu_stats(ts, stats.at(5));
   get_gpu_stats(ts, stats.at(15));
-
-  //std::cout << ts.cpu0_usage << std::endl;
-  //std::cout << ts.cpu1_usage << std::endl;
-  //std::cout << ts.cpu2_usage << std::endl;
-  //std::cout << ts.cpu3_usage << std::endl;
-  //std::cout << ts.cpu_freq << std::endl;
-  
-  //std::cout << ts.gpu_usage << std::endl;
-  //std::cout << ts.gpu_freq << std::endl;
-  
-  //std::cout << ts.mem_usage << std::endl;
-  //std::cout << ts.mem_max << std::endl;
 
   return ts;
 }
@@ -131,26 +131,26 @@ void get_mem_stats(tegrastats & ts, const std::string & str) {
   ts.mem_max = std::stoi(mem_max.substr(0, mem_max.size()-2));
 }
 
-void display_cpu_stats(const int row, const tegrastats & ts) {
-  mvprintw(row, 0, "CPU 0 %d", ts.cpu0_usage);
+void display_cpu_stats(const int & row, const tegrastats & ts) {
+  mvprintw(row, 0, "CPU 0");
   display_bars(row, BAR_OFFSET, ts.cpu0_usage);
   
-  mvprintw(row+1, 0, "CPU 1 %d", ts.cpu1_usage);
+  mvprintw(row+1, 0, "CPU 1");
   display_bars(row+1, BAR_OFFSET, ts.cpu1_usage);
 
-  mvprintw(row+2, 0, "CPU 2 %d", ts.cpu2_usage);
+  mvprintw(row+2, 0, "CPU 2");
   display_bars(row+2, BAR_OFFSET, ts.cpu2_usage);
 
-  mvprintw(row+3, 0, "CPU 3 %d", ts.cpu3_usage);
+  mvprintw(row+3, 0, "CPU 3");
   display_bars(row+3, BAR_OFFSET, ts.cpu3_usage);
 }
 
-void display_gpu_stats(const int row, const tegrastats & ts) {
-  mvprintw(row, 0, "GPU %d", t_stats.gpu_usage);
-  display_bars(row, BAR_OFFSET, t_stats.gpu_usage);
+void display_gpu_stats(const int & row, const tegrastats & ts) {
+  mvprintw(row, 0, "GPU");
+  display_bars(row, BAR_OFFSET, ts.gpu_usage, ts.gpu_freq);
 }
 
-void display_mem_stats(const int row, const tegrastats & ts) {
-  mvprintw(row, 0, "Mem %d", t_stats.gpu_usage);
-  display_bars(row, BAR_OFFSET, t_stats.gpu_usage);
+void display_mem_stats(const int & row, const tegrastats & ts) {
+  mvprintw(row, 0, "Mem");
+  display_mem_bars(row, BAR_OFFSET, ts.mem_usage, ts.mem_max);
 }
