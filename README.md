@@ -11,6 +11,11 @@ Martin Kersner, <m.kersner@gmail.com>, 2017
 <img src="http://i.imgur.com/oMHuVSX.png" align="center"/>
 </p>
 
+## Prerequisites
+```
+sudo apt-get install libncurses5-dev libncursesw5-dev
+```
+
 ## Installation instruction
 ```
 https://github.com/martinkersner/gtop.git
