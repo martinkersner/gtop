@@ -14,7 +14,7 @@
 #include <sstream>
 #include <mutex>
 #include <condition_variable>
-
+#include <unistd.h>
 #include <iostream>
 
 const int STATS_BUFFER_SIZE = 256;

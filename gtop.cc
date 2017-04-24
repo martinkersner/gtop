@@ -14,15 +14,20 @@ bool ready     = false;
 bool finished  = false;
 
 int main() {	
+  if (getuid()) {
+    std::cout << "gtop requires root privileges!" << std::endl;
+    exit(1);
+  }
+
   std::thread t(read_tegrastats); 
 
-	initscr();
-	noecho();
-	timeout(1);
+  initscr();
+  noecho();
+  timeout(1);
 
   start_color();
-	init_pair(WHITE_BLACK, COLOR_WHITE, COLOR_BLACK);
-	init_pair(GREEN_BLACK, COLOR_GREEN, COLOR_BLACK);
+  init_pair(WHITE_BLACK, COLOR_WHITE, COLOR_BLACK);
+  init_pair(GREEN_BLACK, COLOR_GREEN, COLOR_BLACK);
 
   while (1) {
     {
@@ -46,26 +51,26 @@ int main() {
 
     lk.unlock();
 
-		refresh();
+    refresh();
 
-		if (getch() == 'q')
-			break;
-	}
+    if (getch() == 'q')
+      break;
+  }
 
   { 
     std::lock_guard<std::mutex> lk(m);
     finished = true;
   }
 
-	t.join();
-	endwin();
+  t.join();
+  endwin();
 
-	return 0;
+  return 0;
 }
 
 void read_tegrastats() {
   std::array<char, STATS_BUFFER_SIZE> buffer;
-  std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
+  std::shared_ptr<FILE> pipe(popen("~/tegrastats", "r"), pclose);
 
   if (!pipe)
     throw std::runtime_error ("popen() failed!");
