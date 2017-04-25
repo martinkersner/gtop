@@ -13,6 +13,8 @@ bool processed = false;
 bool ready     = false;
 bool finished  = false;
 
+int version;
+
 int main() {	
   if (getuid()) {
     std::cout << "gtop requires root privileges!" << std::endl;
@@ -71,6 +73,7 @@ int main() {
 void read_tegrastats() {
   std::array<char, STATS_BUFFER_SIZE> buffer;
   std::shared_ptr<FILE> pipe(popen("~/tegrastats", "r"), pclose);
+  //std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
 
   if (!pipe)
     throw std::runtime_error ("popen() failed!");
@@ -100,25 +103,53 @@ tegrastats parse_tegrastats(const char * buffer) {
   tegrastats ts;
   auto stats = tokenize(buffer, ' ');
 
+  if (stats.size() >= 15)
+    version = TX1;
+  else
+    version = TX2;
+
   get_mem_stats(ts, stats.at(1));
-  get_cpu_stats(ts, stats.at(5));
-  get_gpu_stats(ts, stats.at(15));
+
+  switch (version) {
+    case TX1:
+      get_cpu_stats_tx1(ts, stats.at(5));
+      get_gpu_stats(ts, stats.at(15));
+      break;
+    case TX2:
+      get_cpu_stats_tx2(ts, stats.at(5));
+      get_gpu_stats(ts, stats.at(13));
+      break;
+  }
 
   return ts;
 }
 
-void get_cpu_stats(tegrastats & ts, const std::string & str) {
+void get_cpu_stats_tx1(tegrastats & ts, const std::string & str) {
   auto cpu_stats = tokenize(str, '@');
   auto cpu_usage_all = cpu_stats.at(0);
-  auto cpu_usage = tokenize(cpu_usage_all.substr(1, cpu_usage_all.size()-2), ','); // remove squared brackets
+  ts.cpu_freq.push_back(std::stoi(cpu_stats.at(1)));
+  auto cpu_usage = tokenize(cpu_usage_all.substr(1, cpu_usage_all.size()-2), ',');
 
   for (const auto & u: cpu_usage) {
     if (u != "off")
       ts.cpu_usage.push_back(std::stoi(u.substr(0, u.size()-1)));
-  }
-  std::cout<< std::endl;
+    }
+}
 
-  ts.cpu_freq = std::stoi(cpu_stats.at(1));
+void get_cpu_stats_tx2(tegrastats & ts, const std::string & str) {
+  auto cpu_stats = tokenize(str.substr(1, str.size()-1), ',');
+  const auto at = std::string("@");
+
+  for (const auto & u: cpu_stats) {
+    if (u != "off") {
+      std::size_t found = at.find(u);
+      if (found == std::string::npos) {
+        auto cpu_info = tokenize(u, at.c_str()[0]);
+        ts.cpu_usage.push_back(std::stoi(cpu_info.at(0).substr(0, cpu_info.at(0).size()-1)));
+        ts.cpu_freq.push_back(std::stoi(cpu_info.at(1)));
+      }
+    }
+  }
 }
 
 void get_gpu_stats(tegrastats & ts, const std::string & str) {
@@ -142,7 +173,10 @@ void display_cpu_stats(const int & row, const tegrastats & ts) {
   for (const auto & u : ts.cpu_usage) {
     auto cpu_label = std::string("CPU ") + std::to_string(idx);
     mvprintw(row+idx, 0, cpu_label.c_str());
-    display_bars(row+idx, BAR_OFFSET, u);
+    if (version == TX1)
+      display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(0));
+    else if (version == TX2)
+      display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(idx));
     idx++;
   }
 }
