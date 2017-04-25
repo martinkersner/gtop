@@ -8,6 +8,6 @@
 SLEEP_INTERVAL=1
 
 while true; do
-  echo "RAM $((RANDOM % 3995))/3995MB (lfb 425x4MB) cpu [$((RANDOM % 100))%,$((RANDOM % 100))%,$((RANDOM % 100))%,$((RANDOM % 100))%]@1734 EMC 0%@1600 AVP 1%@115 NVDEC 192 MSENC 192 GR3D $((RANDOM % 100))%@998 EDP limit 1734"
+  echo "RAM $((RANDOM % 3995))/3995MB (lfb 425x4MB) cpu [$((RANDOM % 100))%,off,$((RANDOM % 100))%,$((RANDOM % 100))%,$((RANDOM % 100))%,$((RANDOM % 100))%,off]@1734 EMC 0%@1600 AVP 1%@115 NVDEC 192 MSENC 192 GR3D $((RANDOM % 100))%@998 EDP limit 1734"
   sleep $SLEEP_INTERVAL
 done

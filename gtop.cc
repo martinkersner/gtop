@@ -44,10 +44,10 @@ int main() {
     display_cpu_stats(0, t_stats);
     
     // GPU
-    display_gpu_stats(4, t_stats);
+    display_gpu_stats(t_stats.cpu_usage.size(), t_stats);
 
     // Memory
-    display_mem_stats(5, t_stats);
+    display_mem_stats(t_stats.cpu_usage.size()+1, t_stats);
 
     lk.unlock();
 
@@ -110,12 +110,13 @@ tegrastats parse_tegrastats(const char * buffer) {
 void get_cpu_stats(tegrastats & ts, const std::string & str) {
   auto cpu_stats = tokenize(str, '@');
   auto cpu_usage_all = cpu_stats.at(0);
-  auto cpu_usage = tokenize(cpu_usage_all.substr(1, cpu_usage_all.size()-1), ',');
+  auto cpu_usage = tokenize(cpu_usage_all.substr(1, cpu_usage_all.size()-2), ','); // remove squared brackets
 
-  ts.cpu0_usage = std::stoi(cpu_usage.at(0).substr(0, cpu_usage.at(0).size()-1));
-  ts.cpu1_usage = std::stoi(cpu_usage.at(1).substr(0, cpu_usage.at(1).size()-1));
-  ts.cpu2_usage = std::stoi(cpu_usage.at(2).substr(0, cpu_usage.at(2).size()-1));
-  ts.cpu3_usage = std::stoi(cpu_usage.at(3).substr(0, cpu_usage.at(3).size()-1));
+  for (const auto & u: cpu_usage) {
+    if (u != "off")
+      ts.cpu_usage.push_back(std::stoi(u.substr(0, u.size()-1)));
+  }
+  std::cout<< std::endl;
 
   ts.cpu_freq = std::stoi(cpu_stats.at(1));
 }
@@ -137,17 +138,13 @@ void get_mem_stats(tegrastats & ts, const std::string & str) {
 }
 
 void display_cpu_stats(const int & row, const tegrastats & ts) {
-  mvprintw(row, 0, "CPU 0");
-  display_bars(row, BAR_OFFSET, ts.cpu0_usage);
-  
-  mvprintw(row+1, 0, "CPU 1");
-  display_bars(row+1, BAR_OFFSET, ts.cpu1_usage);
-
-  mvprintw(row+2, 0, "CPU 2");
-  display_bars(row+2, BAR_OFFSET, ts.cpu2_usage);
-
-  mvprintw(row+3, 0, "CPU 3");
-  display_bars(row+3, BAR_OFFSET, ts.cpu3_usage);
+  int idx = 0;
+  for (const auto & u : ts.cpu_usage) {
+    auto cpu_label = std::string("CPU ") + std::to_string(idx);
+    mvprintw(row+idx, 0, cpu_label.c_str());
+    display_bars(row+idx, BAR_OFFSET, u);
+    idx++;
+  }
 }
 
 void display_gpu_stats(const int & row, const tegrastats & ts) {

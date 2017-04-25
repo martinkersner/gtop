@@ -24,10 +24,7 @@ struct tegrastats {
   int mem_usage;
   int mem_max;
 
-  int cpu0_usage;
-  int cpu1_usage;
-  int cpu2_usage;
-  int cpu3_usage;
+  std::vector<int> cpu_usage;
   int cpu_freq;
 
   int gpu_usage;
