@@ -16,6 +16,7 @@
 #include <condition_variable>
 #include <unistd.h>
 #include <iostream>
+#include <algorithm>
 
 enum jetson_version {TK1, TX1, TX2};
 
@@ -44,5 +45,6 @@ void get_mem_stats(tegrastats &, const std::string &);
 void display_cpu_stats(const int &, const tegrastats &);
 void display_gpu_stats(const int &, const tegrastats &);
 void display_mem_stats(const int &, const tegrastats &);
+void display_usage_chart(const int &, const std::vector<std::vector<int>>);
 
 #endif // GTOP_HH_

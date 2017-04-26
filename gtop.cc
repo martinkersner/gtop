@@ -30,6 +30,10 @@ int main() {
   start_color();
   init_pair(WHITE_BLACK, COLOR_WHITE, COLOR_BLACK);
   init_pair(GREEN_BLACK, COLOR_GREEN, COLOR_BLACK);
+  init_pair(RED_BLACK, COLOR_RED, COLOR_BLACK);
+  init_pair(BLUE_BLACK, COLOR_BLUE, COLOR_BLACK);
+
+  std::vector<std::vector<int>> cpu_usage_buffer;
 
   while (1) {
     {
@@ -41,6 +45,9 @@ int main() {
     std::unique_lock<std::mutex> lk(m);
     cv.wait(lk, []{ return processed; });
     processed = false;
+
+    cpu_usage_buffer.push_back(t_stats.cpu_usage);
+    display_usage_chart(10, cpu_usage_buffer);
 
     // CPU
     display_cpu_stats(0, t_stats);
@@ -195,4 +202,41 @@ void display_gpu_stats(const int & row, const tegrastats & ts) {
 void display_mem_stats(const int & row, const tegrastats & ts) {
   mvprintw(row, 0, "Mem");
   display_mem_bars(row, BAR_OFFSET, ts.mem_usage, ts.mem_max);
+}
+
+void display_usage_chart(const int & row, const std::vector<std::vector<int>> cpu_usage_buffer) {
+  int col = cpu_usage_buffer.size();
+  int idx = 1;
+
+  int max_size = std::min(LINES, 80);
+
+  // display scale
+  mvprintw(row, 0, "-"); 
+  mvprintw(row+max_size, 0, "-"); 
+
+  for (const auto & timepoint : cpu_usage_buffer) {
+    for (const auto & cpu_usage : timepoint) {
+      if (idx == 2 || idx == 3)
+        continue;
+      else if (idx == 5)
+        break;
+       
+      int tmp_cpu_usage = int((max_size/100.0)*cpu_usage);
+      attron(COLOR_PAIR(idx+1));
+      mvprintw(tmp_cpu_usage+row, col, "*"); 
+      attroff(COLOR_PAIR(idx+1));
+
+      idx++;
+    }
+
+    col--;
+    idx = 1;
+  }
+  refresh();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  for (int row = 0; row < LINES; ++row) {
+    mvprintw(row, 0, std::string(COLS, ' ').c_str()); 
+  }
+  refresh();
 }

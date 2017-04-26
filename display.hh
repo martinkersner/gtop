@@ -7,7 +7,7 @@
 #include <ncurses.h>
 #include <string>
 
-enum colors {WHITE_BLACK=1, GREEN_BLACK};
+enum colors {WHITE_BLACK=1, GREEN_BLACK, RED_BLACK, BLUE_BLACK};
 
 const int BAR_MAX_COLS_INT8  = 100;
 const float BAR_MAX_COLS_F32 = 100.0;

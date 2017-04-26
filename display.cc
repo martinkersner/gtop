@@ -14,8 +14,10 @@ void display_bars(const int & row, const int & col, const int & val) {
   mvprintw(row, col, "[");
   attron(COLOR_PAIR(GREEN_BLACK));
   mvprintw(row, col+1, std::string(b.val_bar, '|').c_str());
+  attroff(COLOR_PAIR(GREEN_BLACK));
   attron(COLOR_PAIR(WHITE_BLACK));
   mvprintw(row, col+b.max_bar+1, "%3d%%]", val);
+  attroff(COLOR_PAIR(WHITE_BLACK));
   refresh();
 }
 
@@ -30,8 +32,10 @@ void display_bars(const int & row, const int & col, const int & val, const int &
   mvprintw(row, col, "[");
   attron(COLOR_PAIR(GREEN_BLACK));
   mvprintw(row, col+1, std::string(b.val_bar, '|').c_str());
+  attroff(COLOR_PAIR(GREEN_BLACK));
   attron(COLOR_PAIR(WHITE_BLACK));
   mvprintw(row, col+b.max_bar+1, "%3d%%] %d", val, freq);
+  attroff(COLOR_PAIR(WHITE_BLACK));
   refresh();
 }
 
@@ -47,11 +51,13 @@ void display_mem_bars(const int & row, const int & col, const int & val, const i
   mvprintw(row, col, "[");
   attron(COLOR_PAIR(GREEN_BLACK));
   mvprintw(row, col+1, std::string(b.val_bar, '|').c_str());
-	attron(COLOR_PAIR(WHITE_BLACK));
+  attroff(COLOR_PAIR(GREEN_BLACK));
 
+  attron(COLOR_PAIR(WHITE_BLACK));
   char buffer[MEM_BUFFER_SIZE];
   sprintf(buffer, "%2.2fG/%2.2fG]", mega2giga(val), mega2giga(max_val));
   mvprintw(row, col+b.max_bar-6, buffer);
+  attroff(COLOR_PAIR(WHITE_BLACK));
   refresh();
 }
 
