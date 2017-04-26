@@ -133,7 +133,9 @@ void get_cpu_stats_tx1(tegrastats & ts, const std::string & str) {
   for (const auto & u: cpu_usage) {
     if (u != "off")
       ts.cpu_usage.push_back(std::stoi(u.substr(0, u.size()-1)));
-    }
+    else
+      ts.cpu_usage.push_back(0);
+  }
 }
 
 void get_cpu_stats_tx2(tegrastats & ts, const std::string & str) {
@@ -148,6 +150,10 @@ void get_cpu_stats_tx2(tegrastats & ts, const std::string & str) {
         ts.cpu_usage.push_back(std::stoi(cpu_info.at(0).substr(0, cpu_info.at(0).size()-1)));
         ts.cpu_freq.push_back(std::stoi(cpu_info.at(1)));
       }
+    }
+    else {
+      ts.cpu_usage.push_back(0);
+      ts.cpu_freq.push_back(0);
     }
   }
 }
