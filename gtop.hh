@@ -47,4 +47,6 @@ void display_gpu_stats(const int &, const tegrastats &);
 void display_mem_stats(const int &, const tegrastats &);
 void display_usage_chart(const int &, const std::vector<std::vector<int>>);
 
+void update_usage_chart(std::vector<std::vector<int>> &, const std::vector<int> &);
+
 #endif // GTOP_HH_

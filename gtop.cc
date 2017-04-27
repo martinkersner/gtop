@@ -28,10 +28,13 @@ int main() {
   timeout(1);
 
   start_color();
-  init_pair(WHITE_BLACK, COLOR_WHITE, COLOR_BLACK);
-  init_pair(GREEN_BLACK, COLOR_GREEN, COLOR_BLACK);
-  init_pair(RED_BLACK, COLOR_RED, COLOR_BLACK);
-  init_pair(BLUE_BLACK, COLOR_BLUE, COLOR_BLACK);
+  init_pair(WHITE_BLACK,   COLOR_WHITE,   COLOR_BLACK);
+  init_pair(RED_BLACK,     COLOR_RED,     COLOR_BLACK);
+  init_pair(GREEN_BLACK,   COLOR_GREEN,   COLOR_BLACK);
+  init_pair(YELLOW_BLACK,  COLOR_YELLOW,  COLOR_BLACK);
+  init_pair(BLUE_BLACK,    COLOR_BLUE,    COLOR_BLACK);
+  init_pair(MAGENTA_BLACK, COLOR_MAGENTA, COLOR_BLACK);
+  init_pair(CYAN_BLACK,    COLOR_CYAN,    COLOR_BLACK);
 
   std::vector<std::vector<int>> cpu_usage_buffer;
 
@@ -46,7 +49,8 @@ int main() {
     cv.wait(lk, []{ return processed; });
     processed = false;
 
-    cpu_usage_buffer.push_back(t_stats.cpu_usage);
+    // USAGE CHART
+    update_usage_chart(cpu_usage_buffer, t_stats.cpu_usage);
     display_usage_chart(10, cpu_usage_buffer);
 
     // CPU
@@ -185,7 +189,9 @@ void display_cpu_stats(const int & row, const tegrastats & ts) {
   int idx = 0;
   for (const auto & u : ts.cpu_usage) {
     auto cpu_label = std::string("CPU ") + std::to_string(idx);
+    attron(COLOR_PAIR(idx+1));
     mvprintw(row+idx, 0, cpu_label.c_str());
+    attroff(COLOR_PAIR(idx+1));
     if (version == TX1)
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(0));
     else if (version == TX2)
@@ -207,24 +213,24 @@ void display_mem_stats(const int & row, const tegrastats & ts) {
 void display_usage_chart(const int & row, const std::vector<std::vector<int>> cpu_usage_buffer) {
   int col = cpu_usage_buffer.size();
   int idx = 1;
-
-  int max_size = std::min(LINES, 80);
+  int max_height = std::min(LINES-row-1, 30); // TODO remove magic constant
 
   // display scale
-  mvprintw(row, 0, "-"); 
-  mvprintw(row+max_size, 0, "-"); 
+  mvprintw(row, 0, "100"); 
+  mvprintw(row+float(max_height/2), 0, " 50"); 
+  mvprintw(row+max_height, 0, "  0"); 
 
   for (const auto & timepoint : cpu_usage_buffer) {
     for (const auto & cpu_usage : timepoint) {
-      if (idx == 2 || idx == 3)
+      if (cpu_usage == 0) {
+        idx++;
         continue;
-      else if (idx == 5)
-        break;
+      }
        
-      int tmp_cpu_usage = int((max_size/100.0)*cpu_usage);
-      attron(COLOR_PAIR(idx+1));
-      mvprintw(tmp_cpu_usage+row, col, "*"); 
-      attroff(COLOR_PAIR(idx+1));
+      int tmp_cpu_usage = int((max_height/100.0)*cpu_usage);
+      attron(COLOR_PAIR(idx));
+      mvprintw(max_height-tmp_cpu_usage+row, col+3, "*"); 
+      attroff(COLOR_PAIR(idx));
 
       idx++;
     }
@@ -235,8 +241,19 @@ void display_usage_chart(const int & row, const std::vector<std::vector<int>> cp
   refresh();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  for (int row = 0; row < LINES; ++row) {
+  for (int row = 0; row < LINES; ++row)
     mvprintw(row, 0, std::string(COLS, ' ').c_str()); 
-  }
+
   refresh();
+}
+
+void update_usage_chart(std::vector<std::vector<int>> & usage_buffer,
+                        const std::vector<int> & usage)
+{
+  widget w = update_widget_dims(0);
+
+  if (usage_buffer.size() >= w.max_x)
+    usage_buffer.erase(usage_buffer.begin());
+
+  usage_buffer.push_back(usage);
 }

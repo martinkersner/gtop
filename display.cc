@@ -61,6 +61,7 @@ void display_mem_bars(const int & row, const int & col, const int & val, const i
   refresh();
 }
 
+// deprecated move to widget
 bar update_bar_dims(const int & val) {
   bar b;
 
@@ -74,6 +75,21 @@ bar update_bar_dims(const int & val) {
   }
 
   return b;
+}
+
+widget update_widget_dims(const int & val) {
+  widget w;
+
+  if (COLS < WIDGET_MAX_COLS_INT8) {
+    w.max_x = int(COLS*WIDGET_WIDTH);
+    w.val_x = int((val/WIDGET_MAX_COLS_F32)*w.max_x);
+  }
+  else {
+    w.max_x = BAR_MAX_COLS_INT8;
+    w.val_x = val;
+  }
+
+  return w;
 }
 
 float mega2giga(const int & mega_val) {
