@@ -189,9 +189,9 @@ void display_cpu_stats(const int & row, const tegrastats & ts) {
   int idx = 0;
   for (const auto & u : ts.cpu_usage) {
     auto cpu_label = std::string("CPU ") + std::to_string(idx);
-    attron(COLOR_PAIR(idx+1));
+    attron(A_BOLD | COLOR_PAIR(idx+1));
     mvprintw(row+idx, 0, cpu_label.c_str());
-    attroff(COLOR_PAIR(idx+1));
+    attroff(A_BOLD | COLOR_PAIR(idx+1));
     if (version == TX1)
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(0));
     else if (version == TX2)
