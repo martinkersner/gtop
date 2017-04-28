@@ -4,60 +4,45 @@
 #include "display.hh"
 
 void display_bars(const int & row, const int & col, const int & val) {
-  // clear previous bars
-  mvprintw(row, col, std::string(COLS, ' ').c_str());
-  refresh();
-
   auto b = update_bar_dims(val);
+  clear_row(row, col);
 
-  // display current bars
-  mvprintw(row, col, "[");
-  attron(COLOR_PAIR(GREEN_BLACK));
-  mvprintw(row, col+1, std::string(b.val_bar, '|').c_str());
-  attroff(COLOR_PAIR(GREEN_BLACK));
-  attron(COLOR_PAIR(WHITE_BLACK));
-  mvprintw(row, col+b.max_bar+1, "%3d%%]", val);
-  attroff(COLOR_PAIR(WHITE_BLACK));
+  display_left_bracket(row, col);
+  display_bars(b.val_bar);
+
+  mvprintw(row, col+b.max_bar+1, "%3d%%", val);
+  display_right_bracket();
+
   refresh();
 }
 
 void display_bars(const int & row, const int & col, const int & val, const int & freq) {
-  // clear previous bars
-  mvprintw(row, col, std::string(COLS, ' ').c_str());
-  refresh();
-
   auto b = update_bar_dims(val);
+  clear_row(row, col);
 
-  // display current bars
-  mvprintw(row, col, "[");
-  attron(COLOR_PAIR(GREEN_BLACK));
-  mvprintw(row, col+1, std::string(b.val_bar, '|').c_str());
-  attroff(COLOR_PAIR(GREEN_BLACK));
-  attron(COLOR_PAIR(WHITE_BLACK));
-  mvprintw(row, col+b.max_bar+1, "%3d%%] %d", val, freq);
-  attroff(COLOR_PAIR(WHITE_BLACK));
+  display_left_bracket(row, col);
+  display_bars(b.val_bar);
+
+  mvprintw(row, col+b.max_bar+1, "%3d%%", val);
+  display_right_bracket();
+  printw(" %d", freq);
+
   refresh();
 }
 
 void display_mem_bars(const int & row, const int & col, const int & val, const int & max_val) {
-  // clear previous bars
-  mvprintw(row, col, std::string(COLS, ' ').c_str());
-  refresh();
-
   auto val_norm = int((float(val) / max_val) * 100);
   auto b = update_bar_dims(val_norm);
 
-  // display current bars
-  mvprintw(row, col, "[");
-  attron(COLOR_PAIR(GREEN_BLACK));
-  mvprintw(row, col+1, std::string(b.val_bar, '|').c_str());
-  attroff(COLOR_PAIR(GREEN_BLACK));
+  clear_row(row, col);
 
-  attron(COLOR_PAIR(WHITE_BLACK));
+  display_left_bracket(row, col);
+  display_bars(b.val_bar);
+
   char buffer[MEM_BUFFER_SIZE];
-  sprintf(buffer, "%2.2fG/%2.2fG]", mega2giga(val), mega2giga(max_val));
+  sprintf(buffer, "%2.2fG/%2.2fG", mega2giga(val), mega2giga(max_val));
   mvprintw(row, col+b.max_bar-6, buffer);
-  attroff(COLOR_PAIR(WHITE_BLACK));
+  display_right_bracket();
   refresh();
 }
 
@@ -93,5 +78,28 @@ widget update_widget_dims(const int & val) {
 }
 
 float mega2giga(const int & mega_val) {
-  return float(mega_val)/1000;
+  return mega_val/float(1000);
+}
+
+void clear_row(const int & row, const int & col) {
+  mvprintw(row, col, std::string(COLS, ' ').c_str());
+  refresh();
+}
+
+void display_bars(const int & size) {
+  attron(COLOR_PAIR(GREEN_BLACK));
+  printw(std::string(size, '|').c_str());
+  attroff(COLOR_PAIR(GREEN_BLACK));
+}
+
+void display_left_bracket(const int & row, const int & col) {
+  attron(A_BOLD);
+  mvprintw(row, col, "[");
+  attroff(A_BOLD);
+}
+
+void display_right_bracket() {
+  attron(A_BOLD);
+  printw("]");
+  attroff(A_BOLD);
 }

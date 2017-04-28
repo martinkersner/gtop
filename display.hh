@@ -42,9 +42,13 @@ struct widget {
 
 void display_bars(const int &, const int &, const int &);
 void display_bars(const int &, const int &, const int &, const int &);
+void display_bars(const int &);
 void display_mem_bars(const int &, const int &, const int &, const int &);
 float mega2giga(const int &);
 bar update_bar_dims(const int &);
 widget update_widget_dims(const int &);
+void display_left_bracket(const int &, const int &);
+void display_right_bracket();
+void clear_row(const int &, const int &);
 
 #endif // DISPLAY_HH_
