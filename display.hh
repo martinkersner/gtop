@@ -34,10 +34,10 @@ struct bar {
 };
 
 struct widget {
-  int max_x;
-  int val_x;
-  int max_y;
-  int val_y;
+  unsigned int max_x;
+  unsigned int val_x;
+  unsigned int max_y;
+  unsigned int val_y;
 };
 
 void display_bars(const int &, const int &, const int &);

@@ -22,6 +22,7 @@ enum jetson_version {TK1, TX1, TX2};
 
 const int STATS_BUFFER_SIZE = 256;
 const int BAR_OFFSET = 6;
+const int MIN_HEIGHT_USAGE_CHART = 30;
 
 struct tegrastats {
   int mem_usage;

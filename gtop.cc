@@ -83,8 +83,8 @@ int main() {
 
 void read_tegrastats() {
   std::array<char, STATS_BUFFER_SIZE> buffer;
-  std::shared_ptr<FILE> pipe(popen("~/tegrastats", "r"), pclose);
-  //std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
+  //std::shared_ptr<FILE> pipe(popen("~/tegrastats", "r"), pclose);
+  std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
 
   if (!pipe)
     throw std::runtime_error ("popen() failed!");
@@ -150,7 +150,7 @@ void get_cpu_stats_tx1(tegrastats & ts, const std::string & str) {
 }
 
 void get_cpu_stats_tx2(tegrastats & ts, const std::string & str) {
-  auto cpu_stats = tokenize(str.substr(1, str.size()-1), ',');
+  const auto cpu_stats = tokenize(str.substr(1, str.size()-1), ',');
   const auto at = std::string("@");
 
   for (const auto & u: cpu_stats) {
@@ -170,16 +170,16 @@ void get_cpu_stats_tx2(tegrastats & ts, const std::string & str) {
 }
 
 void get_gpu_stats(tegrastats & ts, const std::string & str) {
-  auto gpu_stats = tokenize(str, '@');
-  auto gpu_usage = gpu_stats.at(0);
+  const auto gpu_stats = tokenize(str, '@');
+  const auto gpu_usage = gpu_stats.at(0);
 
   ts.gpu_usage = std::stoi(gpu_usage.substr(0, gpu_usage.size()-1));
   ts.gpu_freq = std::stoi(gpu_stats.at(1));
 }
 
 void get_mem_stats(tegrastats & ts, const std::string & str) {
-  auto mem_stats = tokenize(str, '/');
-  auto mem_max = mem_stats.at(1);
+  const auto mem_stats = tokenize(str, '/');
+  const auto mem_max = mem_stats.at(1);
 
   ts.mem_usage = std::stoi(mem_stats.at(0));
   ts.mem_max = std::stoi(mem_max.substr(0, mem_max.size()-2));
@@ -188,14 +188,16 @@ void get_mem_stats(tegrastats & ts, const std::string & str) {
 void display_cpu_stats(const int & row, const tegrastats & ts) {
   int idx = 0;
   for (const auto & u : ts.cpu_usage) {
-    auto cpu_label = std::string("CPU ") + std::to_string(idx);
+    const auto cpu_label = std::string("CPU ") + std::to_string(idx);
     attron(COLOR_PAIR(idx+1));
     mvprintw(row+idx, 0, cpu_label.c_str());
     attroff(COLOR_PAIR(idx+1));
+
     if (version == TX1)
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(0));
     else if (version == TX2)
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(idx));
+
     idx++;
   }
 }
@@ -213,7 +215,7 @@ void display_mem_stats(const int & row, const tegrastats & ts) {
 void display_usage_chart(const int & row, const std::vector<std::vector<int>> cpu_usage_buffer) {
   int col = cpu_usage_buffer.size();
   int idx = 1;
-  int max_height = std::min(LINES-row-1, 30); // TODO remove magic constant
+  const int max_height = std::min(LINES-row-1, MIN_HEIGHT_USAGE_CHART);
 
   // display scale
   mvprintw(row, 0, "100"); 
