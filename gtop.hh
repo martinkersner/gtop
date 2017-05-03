@@ -24,6 +24,9 @@ const int STATS_BUFFER_SIZE = 256;
 const int BAR_OFFSET = 6;
 const int MIN_HEIGHT_USAGE_CHART = 30;
 
+const std::string TEGRASTATS_PATH     = "~/tegrastats";
+const std::string TEGRASTATSFAKE_PATH = "./tegrastats_fake";
+
 struct tegrastats {
   int mem_usage;
   int mem_max;

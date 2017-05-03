@@ -83,8 +83,18 @@ int main() {
 
 void read_tegrastats() {
   std::array<char, STATS_BUFFER_SIZE> buffer;
-  std::shared_ptr<FILE> pipe(popen("~/tegrastats", "r"), pclose);
-  //std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
+
+#ifdef TEGRASTATS_FAKE
+  std::shared_ptr<FILE> pipe(popen(TEGRASTATSFAKE_PATH.c_str(), "r"), pclose);
+#else
+  if (!file_exists(TEGRASTATS_PATH)) {
+    std::cerr << "tegrastats was not found at the expected location "
+              << TEGRASTATS_PATH << std::endl;
+    exit(1); // TODO terminate correctly
+  }
+
+  std::shared_ptr<FILE> pipe(popen(TEGRASTATS_PATH.c_str(), "r"), pclose);
+#endif
 
   if (!pipe)
     throw std::runtime_error ("popen() failed!");
