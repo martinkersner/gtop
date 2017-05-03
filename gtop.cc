@@ -49,7 +49,7 @@ int main() {
     cv.wait(lk, []{ return processed; });
     processed = false;
 
-    // USAGE CHART
+    // CPU USAGE CHART
     update_usage_chart(cpu_usage_buffer, t_stats.cpu_usage);
     display_usage_chart(10, cpu_usage_buffer);
 
@@ -66,7 +66,7 @@ int main() {
 
     refresh();
 
-    if (getch() == 'q')
+    if (getch() == 'q') // press 'q' or Ctrl-C to quit
       break;
   }
 
@@ -83,8 +83,8 @@ int main() {
 
 void read_tegrastats() {
   std::array<char, STATS_BUFFER_SIZE> buffer;
-  //std::shared_ptr<FILE> pipe(popen("~/tegrastats", "r"), pclose);
-  std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
+  std::shared_ptr<FILE> pipe(popen("~/tegrastats", "r"), pclose);
+  //std::shared_ptr<FILE> pipe(popen("./tegrastats_fake", "r"), pclose);
 
   if (!pipe)
     throw std::runtime_error ("popen() failed!");
