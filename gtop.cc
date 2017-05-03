@@ -2,8 +2,6 @@
 // 2017/04/21
 
 #include "gtop.hh"
-#include "utils.hh"
-#include "display.hh"
 
 std::mutex m;
 std::condition_variable cv;
@@ -12,8 +10,6 @@ tegrastats t_stats;
 bool processed = false;
 bool ready     = false;
 bool finished  = false;
-
-int version;
 
 int main() {	
   if (getuid()) {
@@ -49,18 +45,14 @@ int main() {
     cv.wait(lk, []{ return processed; });
     processed = false;
 
+    // CPU, GPU, MEM STATS
+    dimensions dim_stats;
+    display_stats(dim_stats, t_stats);
+
     // CPU USAGE CHART
     update_usage_chart(cpu_usage_buffer, t_stats.cpu_usage);
     display_usage_chart(10, cpu_usage_buffer);
 
-    // CPU
-    display_cpu_stats(0, t_stats);
-    
-    // GPU
-    display_gpu_stats(t_stats.cpu_usage.size(), t_stats);
-
-    // Memory
-    display_mem_stats(t_stats.cpu_usage.size()+1, t_stats);
 
     lk.unlock();
 
@@ -125,13 +117,13 @@ tegrastats parse_tegrastats(const char * buffer) {
   auto stats = tokenize(buffer, ' ');
 
   if (stats.size() >= 15)
-    version = TX1;
+    ts.version = TX1;
   else
-    version = TX2;
+    ts.version = TX2;
 
   get_mem_stats(ts, stats.at(1));
 
-  switch (version) {
+  switch (ts.version) {
     case TX1:
       get_cpu_stats_tx1(ts, stats.at(5));
       get_gpu_stats(ts, stats.at(15));
@@ -139,6 +131,8 @@ tegrastats parse_tegrastats(const char * buffer) {
     case TX2:
       get_cpu_stats_tx2(ts, stats.at(5));
       get_gpu_stats(ts, stats.at(13));
+      break;
+    case TK1: // TODO
       break;
   }
 
@@ -195,68 +189,15 @@ void get_mem_stats(tegrastats & ts, const std::string & str) {
   ts.mem_max = std::stoi(mem_max.substr(0, mem_max.size()-2));
 }
 
-void display_cpu_stats(const int & row, const tegrastats & ts) {
-  int idx = 0;
-  for (const auto & u : ts.cpu_usage) {
-    const auto cpu_label = std::string("CPU ") + std::to_string(idx);
-    attron(COLOR_PAIR(idx+1));
-    mvprintw(row+idx, 0, cpu_label.c_str());
-    attroff(COLOR_PAIR(idx+1));
+void display_stats(const dimensions & d, const tegrastats & ts) {
+  // CPU
+  display_cpu_stats(0, ts);
 
-    if (version == TX1)
-      display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(0));
-    else if (version == TX2)
-      display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(idx));
+  // GPU
+  display_gpu_stats(ts.cpu_usage.size(), ts);
 
-    idx++;
-  }
-}
-
-void display_gpu_stats(const int & row, const tegrastats & ts) {
-  mvprintw(row, 0, "GPU");
-  display_bars(row, BAR_OFFSET, ts.gpu_usage, ts.gpu_freq);
-}
-
-void display_mem_stats(const int & row, const tegrastats & ts) {
-  mvprintw(row, 0, "Mem");
-  display_mem_bars(row, BAR_OFFSET, ts.mem_usage, ts.mem_max);
-}
-
-void display_usage_chart(const int & row, const std::vector<std::vector<int>> cpu_usage_buffer) {
-  int col = cpu_usage_buffer.size();
-  int idx = 1;
-  const int max_height = std::min(LINES-row-1, MIN_HEIGHT_USAGE_CHART);
-
-  // display scale
-  mvprintw(row, 0, "100"); 
-  mvprintw(row+float(max_height/2), 0, " 50"); 
-  mvprintw(row+max_height, 0, "  0"); 
-
-  for (const auto & timepoint : cpu_usage_buffer) {
-    for (const auto & cpu_usage : timepoint) {
-      if (cpu_usage == 0) {
-        idx++;
-        continue;
-      }
-       
-      int tmp_cpu_usage = int((max_height/100.0)*cpu_usage);
-      attron(COLOR_PAIR(idx));
-      mvprintw(max_height-tmp_cpu_usage+row, col+3, "*"); 
-      attroff(COLOR_PAIR(idx));
-
-      idx++;
-    }
-
-    col--;
-    idx = 1;
-  }
-  refresh();
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  for (int row = 0; row < LINES; ++row)
-    mvprintw(row, 0, std::string(COLS, ' ').c_str()); 
-
-  refresh();
+  // Memory
+  display_mem_stats(ts.cpu_usage.size()+1, ts);
 }
 
 void update_usage_chart(std::vector<std::vector<int>> & usage_buffer,

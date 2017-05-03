@@ -6,6 +6,13 @@
 
 #include <ncurses.h>
 #include <string>
+#include <chrono>
+#include <thread>
+
+#include "utils.hh"
+
+const int BAR_OFFSET = 6;
+const int MIN_HEIGHT_USAGE_CHART = 30;
 
 enum colors {RED_BLACK=1,
              GREEN_BLACK,
@@ -40,6 +47,14 @@ struct widget {
   unsigned int val_y;
 };
 
+struct dimensions {
+  unsigned int min_x;
+  unsigned int max_x;
+
+  unsigned int min_y;
+  unsigned int max_y;
+};
+
 void display_bars(const int &, const int &, const int &);
 void display_bars(const int &, const int &, const int &, const int &);
 void display_bars(const int &);
@@ -50,5 +65,10 @@ widget update_widget_dims(const int &);
 void display_left_bracket(const int &, const int &);
 void display_right_bracket();
 void clear_row(const int &, const int &);
+
+void display_cpu_stats(const int &, const tegrastats &);
+void display_gpu_stats(const int &, const tegrastats &);
+void display_mem_stats(const int &, const tegrastats &);
+void display_usage_chart(const int &, const std::vector<std::vector<int>>);
 
 #endif // DISPLAY_HH_

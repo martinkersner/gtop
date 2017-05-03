@@ -18,25 +18,13 @@
 #include <iostream>
 #include <algorithm>
 
-enum jetson_version {TK1, TX1, TX2};
+#include "display.hh"
+#include "utils.hh"
 
 const int STATS_BUFFER_SIZE = 256;
-const int BAR_OFFSET = 6;
-const int MIN_HEIGHT_USAGE_CHART = 30;
 
 const std::string TEGRASTATS_PATH     = "~/tegrastats";
 const std::string TEGRASTATSFAKE_PATH = "./tegrastats_fake";
-
-struct tegrastats {
-  int mem_usage;
-  int mem_max;
-
-  std::vector<int> cpu_usage;
-  std::vector<int> cpu_freq;
-
-  int gpu_usage;
-  int gpu_freq;
-};
 
 void read_tegrastats();
 tegrastats parse_tegrastats(const char *);
@@ -46,11 +34,7 @@ void get_cpu_stats_tx2(tegrastats &, const std::string &);
 void get_gpu_stats(tegrastats &, const std::string &);
 void get_mem_stats(tegrastats &, const std::string &);
 
-void display_cpu_stats(const int &, const tegrastats &);
-void display_gpu_stats(const int &, const tegrastats &);
-void display_mem_stats(const int &, const tegrastats &);
-void display_usage_chart(const int &, const std::vector<std::vector<int>>);
-
+void display_stats(const dimensions &, const tegrastats &);
 void update_usage_chart(std::vector<std::vector<int>> &, const std::vector<int> &);
 
 #endif // GTOP_HH_
