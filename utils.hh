@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <sys/stat.h>
+#include <wordexp.h>
 
 enum jetson_version {TK1, TX1, TX2};
 
