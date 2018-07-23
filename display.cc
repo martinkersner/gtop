@@ -121,6 +121,11 @@ void display_cpu_stats(const int & row, const tegrastats & ts) {
   }
 }
 
+void display_emc_stats(const int & row, const tegrastats & ts) {
+  mvprintw(row, 0, "EMC");
+  display_bars(row, BAR_OFFSET, ts.emc_usage, ts.emc_freq);
+}
+
 void display_gpu_stats(const int & row, const tegrastats & ts) {
   mvprintw(row, 0, "GPU");
   display_bars(row, BAR_OFFSET, ts.gpu_usage, ts.gpu_freq);

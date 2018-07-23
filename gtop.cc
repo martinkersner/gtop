@@ -1,22 +1,62 @@
 // Martin Kersner, m.kersner@gmail.com
 // 2017/04/21
+// Modified by Zach LaCelle, zlacelle@gmail.com
+// 2018/07/23
 
 #include "gtop.hh"
+#include <getopt.h>
+#include <string>
 
 std::mutex m;
 std::condition_variable cv;
 tegrastats t_stats;
+std::string JETSON_TYPE="";
 
 bool processed = false;
 bool ready     = false;
 bool finished  = false;
 
-int main() {	
+int main(int argc, char** argv) {	
   if (getuid()) {
     std::cout << "gtop requires root privileges!" << std::endl;
     exit(1);
   }
 
+  //Get options
+  const char* short_opts = "21k";
+  static struct option long_options[] =
+  {
+    {"tx2", no_argument, nullptr, '2'},
+    {"tx1", no_argument, nullptr, '1'},
+    {"tk1", no_argument, nullptr, 'k'},
+    {nullptr, no_argument, nullptr, 0}
+  };
+
+  const auto opt = getopt_long(argc, argv, short_opts, long_options, nullptr);
+  switch(opt)
+  {
+    case '2':
+    {
+      JETSON_TYPE="TX2";
+      break;
+    }
+    case '1':
+    {
+      JETSON_TYPE="TX1";
+      break;
+    }
+    case 'k':
+    {
+      JETSON_TYPE="TK1";
+      break;
+    }
+    default:
+    {
+      printf("ERROR: Must define board type (either --tx2 --tx1, or --tk1)!\n");
+      exit(-1);
+    }
+  }
+  
   std::thread t(read_tegrastats); 
 
   initscr();
@@ -115,11 +155,19 @@ void read_tegrastats() {
 tegrastats parse_tegrastats(const char * buffer) {
   tegrastats ts;
   auto stats = tokenize(buffer, ' ');
-
-  if (stats.size() >= 15)
-    ts.version = TX1;
-  else
+  
+  if( JETSON_TYPE.compare("TX2") == 0 )
+  {
     ts.version = TX2;
+  }
+  else if( JETSON_TYPE.compare("TX1") == 0 )
+  {
+    ts.version = TX1;
+  }
+  else
+  {
+    ts.version = TK1;
+  }
 
   get_mem_stats(ts, stats.at(1));
 
@@ -130,13 +178,36 @@ tegrastats parse_tegrastats(const char * buffer) {
       break;
     case TX2:
       get_cpu_stats_tx2(ts, stats.at(5));
-      get_gpu_stats(ts, stats.at(13));
+      //Test for newer TX2 format
+      if( stats.at(8) == "GR3D_FREQ" )
+      {
+	//New format
+	get_gpu_stats(ts, stats.at(9));
+      }
+      else
+      {
+	//Old format
+	get_gpu_stats(ts, stats.at(13));
+      }
+      if( stats.at(7) == "EMC_FREQ" )
+      {
+	get_emc_stats(ts, stats.at(8));
+      }
       break;
     case TK1: // TODO
       break;
   }
 
   return ts;
+}
+
+void get_emc_stats(tegrastats & ts, const std::string & str)
+{
+  auto emc_stats = tokenize(str, '@');
+  auto emc_usage = emc_stats.at(0);
+  
+  ts.emc_usage = std::stoi(emc_usage.substr(0, emc_usage.size()-1));
+  ts.emc_freq = std::stoi(emc_stats.at(1));
 }
 
 void get_cpu_stats_tx1(tegrastats & ts, const std::string & str) {
@@ -192,12 +263,15 @@ void get_mem_stats(tegrastats & ts, const std::string & str) {
 void display_stats(const dimensions & d, const tegrastats & ts) {
   // CPU
   display_cpu_stats(0, ts);
-
+  
   // GPU
   display_gpu_stats(ts.cpu_usage.size(), ts);
 
   // Memory
-  display_mem_stats(ts.cpu_usage.size()+1, ts);
+  display_mem_stats(1 + ts.cpu_usage.size(), ts);
+
+  // EMC
+  display_emc_stats(2 + ts.cpu_usage.size(), ts);
 }
 
 void update_usage_chart(std::vector<std::vector<int>> & usage_buffer,
