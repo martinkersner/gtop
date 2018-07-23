@@ -38,4 +38,7 @@ void get_emc_stats(tegrastats &, const std::string &);
 void display_stats(const dimensions &, const tegrastats &);
 void update_usage_chart(std::vector<std::vector<int>> &, const std::vector<int> &);
 
+void write_csv(tegrastats &);
+void write_csv_header(int numCpus);
+
 #endif // GTOP_HH_

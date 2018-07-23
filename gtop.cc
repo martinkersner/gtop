@@ -10,7 +10,9 @@
 std::mutex m;
 std::condition_variable cv;
 tegrastats t_stats;
-std::string JETSON_TYPE="";
+std::string JETSON_TYPE="N/A";
+bool WRITE_CSV=false;
+FILE* csvFile=nullptr;
 
 bool processed = false;
 bool ready     = false;
@@ -23,36 +25,65 @@ int main(int argc, char** argv) {
   }
 
   //Get options
-  const char* short_opts = "21k";
+  const char* short_opts = "21kc";
   static struct option long_options[] =
   {
     {"tx2", no_argument, nullptr, '2'},
     {"tx1", no_argument, nullptr, '1'},
     {"tk1", no_argument, nullptr, 'k'},
+    {"csv", no_argument, nullptr, 'c'}, 
     {nullptr, no_argument, nullptr, 0}
   };
 
-  const auto opt = getopt_long(argc, argv, short_opts, long_options, nullptr);
-  switch(opt)
+  while( 1 )
   {
-    case '2':
-    {
-      JETSON_TYPE="TX2";
+    const auto opt = getopt_long(argc, argv, short_opts, long_options, nullptr);
+
+    if( opt == -1 )
       break;
-    }
-    case '1':
+    
+    switch(opt)
     {
-      JETSON_TYPE="TX1";
-      break;
+      case '2':
+      {
+        JETSON_TYPE="TX2";
+        break;
+      }
+      case '1':
+      {
+        JETSON_TYPE="TX1";
+        break;
+      }
+      case 'k':
+      {
+        JETSON_TYPE="TK1";
+        break;
+      }
+      case 'c':
+      {
+	WRITE_CSV=true;
+	break;
+      }
+      default:
+      {
+        printf("ERROR: Bad Argument.\n");
+        exit(-1);
+      }
     }
-    case 'k':
+  } //end: while( 1 )
+
+  if( JETSON_TYPE.compare("N/A") == 0 )
+  {
+    printf("ERROR: Must have Jetson board type option (--tx2, --tx1, --tk1)\n");
+    exit(-1);
+  }
+
+  if( WRITE_CSV )
+  {
+    csvFile = fopen("gtop.csv", "w");
+    if( csvFile == nullptr )
     {
-      JETSON_TYPE="TK1";
-      break;
-    }
-    default:
-    {
-      printf("ERROR: Must define board type (either --tx2 --tx1, or --tk1)!\n");
+      printf("ERROR: Could not open gtop.csv for writing.\n");
       exit(-1);
     }
   }
@@ -93,7 +124,12 @@ int main(int argc, char** argv) {
     update_usage_chart(cpu_usage_buffer, t_stats.cpu_usage);
     display_usage_chart(10, cpu_usage_buffer);
 
-
+    // Write to CSV, if desired
+    if( WRITE_CSV )
+    {
+      write_csv(t_stats);
+    }
+    
     lk.unlock();
 
     refresh();
@@ -146,6 +182,15 @@ void read_tegrastats() {
       ready = false;
       t_stats = parse_tegrastats(buffer.data());
       processed = true;
+
+      static bool needCsvHeader = true;
+      if( needCsvHeader == true )
+      {
+	int numCpus = t_stats.cpu_usage.size();
+	write_csv_header(numCpus);
+	needCsvHeader = false;
+      }
+      
       lk.unlock();
       cv.notify_one();
     }
@@ -283,4 +328,27 @@ void update_usage_chart(std::vector<std::vector<int>> & usage_buffer,
     usage_buffer.erase(usage_buffer.begin());
 
   usage_buffer.push_back(usage);
+}
+
+void write_csv(tegrastats & ts)
+{
+  fprintf(csvFile, "%d,%d,%d,%d,%d,%d",ts.mem_usage,ts.mem_max,ts.gpu_usage,ts.gpu_freq,ts.emc_usage,ts.emc_freq);
+  int num_cpus = ts.cpu_usage.size();
+  for(int i=0; i<num_cpus; ++i)
+  {
+    fprintf(csvFile, ",%d,%d", ts.cpu_usage[i], ts.cpu_freq[i]);
+  }
+  fprintf(csvFile, "\n");
+  fflush(csvFile);
+}
+
+void write_csv_header(int numCpus)
+{
+  fprintf(csvFile, "Mem Usage,Mem Max,GPU Usage,GPU Freq,EMC Usage,EMC Freq");
+  for(int i=0;i<numCpus;++i)
+  {
+    fprintf(csvFile, ",CPU %d Usage,CPU %d Freq",i,i);
+  }
+  fprintf(csvFile, "\n");
+  fflush(csvFile);
 }
