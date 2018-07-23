@@ -333,10 +333,17 @@ void update_usage_chart(std::vector<std::vector<int>> & usage_buffer,
 
 void write_csv(tegrastats & ts)
 {
+  char utc[128];
+  time_t rawtime;
+  struct tm* timeinfo;
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+  strftime(utc,128,"%Y/%m/%d %T",timeinfo);
+  puts(utc);
   struct timespec timesp;
   clock_gettime(CLOCK_MONOTONIC, &timesp);
-  float utc = timesp.tv_sec + (timesp.tv_nsec / 1e9);
-  fprintf(csvFile, "%f,%d,%d,%d,%d,%d,%d",utc,ts.mem_usage,ts.mem_max,ts.gpu_usage,ts.gpu_freq,ts.emc_usage,ts.emc_freq);
+  float monotime = timesp.tv_sec + (timesp.tv_nsec / 1e9);
+  fprintf(csvFile, "%s,%f,%d,%d,%d,%d,%d,%d",utc,monotime,ts.mem_usage,ts.mem_max,ts.gpu_usage,ts.gpu_freq,ts.emc_usage,ts.emc_freq);
   int num_cpus = ts.cpu_usage.size();
   for(int i=0; i<num_cpus; ++i)
   {
@@ -348,7 +355,7 @@ void write_csv(tegrastats & ts)
 
 void write_csv_header(int numCpus)
 {
-  fprintf(csvFile, "UTC,Mem Usage,Mem Max,GPU Usage,GPU Freq,EMC Usage,EMC Freq");
+  fprintf(csvFile, "UTC,Mono Time,Mem Usage,Mem Max,GPU Usage,GPU Freq,EMC Usage,EMC Freq");
   for(int i=0;i<numCpus;++i)
   {
     fprintf(csvFile, ",CPU %d Usage,CPU %d Freq",i,i);
