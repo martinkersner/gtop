@@ -6,6 +6,7 @@
 #include "gtop.hh"
 #include <getopt.h>
 #include <string>
+#include <time.h>
 
 std::mutex m;
 std::condition_variable cv;
@@ -332,7 +333,10 @@ void update_usage_chart(std::vector<std::vector<int>> & usage_buffer,
 
 void write_csv(tegrastats & ts)
 {
-  fprintf(csvFile, "%d,%d,%d,%d,%d,%d",ts.mem_usage,ts.mem_max,ts.gpu_usage,ts.gpu_freq,ts.emc_usage,ts.emc_freq);
+  struct timespec timesp;
+  clock_gettime(CLOCK_MONOTONIC, &timesp);
+  float utc = timesp.tv_sec + (timesp.tv_nsec / 1e9);
+  fprintf(csvFile, "%f,%d,%d,%d,%d,%d,%d",utc,ts.mem_usage,ts.mem_max,ts.gpu_usage,ts.gpu_freq,ts.emc_usage,ts.emc_freq);
   int num_cpus = ts.cpu_usage.size();
   for(int i=0; i<num_cpus; ++i)
   {
@@ -344,7 +348,7 @@ void write_csv(tegrastats & ts)
 
 void write_csv_header(int numCpus)
 {
-  fprintf(csvFile, "Mem Usage,Mem Max,GPU Usage,GPU Freq,EMC Usage,EMC Freq");
+  fprintf(csvFile, "UTC,Mem Usage,Mem Max,GPU Usage,GPU Freq,EMC Usage,EMC Freq");
   for(int i=0;i<numCpus;++i)
   {
     fprintf(csvFile, ",CPU %d Usage,CPU %d Freq",i,i);
