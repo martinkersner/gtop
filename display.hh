@@ -69,6 +69,7 @@ void clear_row(const int &, const int &);
 void display_cpu_stats(const int &, const tegrastats &);
 void display_gpu_stats(const int &, const tegrastats &);
 void display_mem_stats(const int &, const tegrastats &);
+void display_emc_stats(const int &, const tegrastats &);
 void display_usage_chart(const int &, const std::vector<std::vector<int>>);
 
 #endif // DISPLAY_HH_
