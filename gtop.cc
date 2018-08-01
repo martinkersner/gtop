@@ -19,7 +19,7 @@ bool processed = false;
 bool ready     = false;
 bool finished  = false;
 
-int main(int argc, char** argv) {	
+int main(int argc, char** argv) {
   if (getuid()) {
     std::cout << "gtop requires root privileges!" << std::endl;
     exit(1);
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     {"tx2", no_argument, nullptr, '2'},
     {"tx1", no_argument, nullptr, '1'},
     {"tk1", no_argument, nullptr, 'k'},
-    {"csv", no_argument, nullptr, 'c'}, 
+    {"csv", no_argument, nullptr, 'c'},
     {nullptr, no_argument, nullptr, 0}
   };
 
@@ -41,8 +41,10 @@ int main(int argc, char** argv) {
     const auto opt = getopt_long(argc, argv, short_opts, long_options, nullptr);
 
     if( opt == -1 )
+    {
       break;
-    
+    }
+
     switch(opt)
     {
       case '2':
@@ -62,8 +64,8 @@ int main(int argc, char** argv) {
       }
       case 'c':
       {
-	WRITE_CSV=true;
-	break;
+        WRITE_CSV=true;
+        break;
       }
       default:
       {
@@ -181,15 +183,20 @@ void read_tegrastats() {
 
       cv.wait(lk, []{ return ready; });
       ready = false;
-      t_stats = parse_tegrastats(buffer.data());
+      //Maybe in the future, we want to only continue if we get enough stats
+      bool foundMem = false;
+      bool foundCPU = false;
+      bool foundEMC = false;
+      bool foundGPU = false;
+      t_stats = parse_tegrastats(&foundMem, &foundCPU, &foundEMC, &foundGPU, buffer.data());
       processed = true;
 
       static bool needCsvHeader = true;
-      if( needCsvHeader == true )
+      if( needCsvHeader == true && WRITE_CSV == true )
       {
-	int numCpus = t_stats.cpu_usage.size();
-	write_csv_header(numCpus);
-	needCsvHeader = false;
+        int numCpus = t_stats.cpu_usage.size();
+        write_csv_header(numCpus);
+        needCsvHeader = false;
       }
       
       lk.unlock();
@@ -198,9 +205,14 @@ void read_tegrastats() {
   }
 }
 
-tegrastats parse_tegrastats(const char * buffer) {
+tegrastats parse_tegrastats(bool* _foundMem,
+                            bool* _foundCPU,
+                            bool* _foundEMC,
+                            bool* _foundGPU,
+                            const char * _buffer)
+{
   tegrastats ts;
-  auto stats = tokenize(buffer, ' ');
+  auto stats = tokenize(_buffer, ' ');
   
   if( JETSON_TYPE.compare("TX2") == 0 )
   {
@@ -215,30 +227,15 @@ tegrastats parse_tegrastats(const char * buffer) {
     ts.version = TK1;
   }
 
-  get_mem_stats(ts, stats.at(1));
-
   switch (ts.version) {
     case TX1:
+      get_mem_stats(ts, stats.at(1));
+      //get_tx1_stats(ts, stats);
       get_cpu_stats_tx1(ts, stats.at(5));
       get_gpu_stats(ts, stats.at(15));
       break;
     case TX2:
-      get_cpu_stats_tx2(ts, stats.at(5));
-      //Test for newer TX2 format
-      if( stats.at(8) == "GR3D_FREQ" )
-      {
-	//New format
-	get_gpu_stats(ts, stats.at(9));
-      }
-      else
-      {
-	//Old format
-	get_gpu_stats(ts, stats.at(13));
-      }
-      if( stats.at(7) == "EMC_FREQ" )
-      {
-	get_emc_stats(ts, stats.at(8));
-      }
+      get_tx2_stats(ts, _foundMem, _foundCPU, _foundEMC, _foundGPU, stats);
       break;
     case TK1: // TODO
       break;
@@ -247,11 +244,65 @@ tegrastats parse_tegrastats(const char * buffer) {
   return ts;
 }
 
+void get_tx2_stats(tegrastats & ts,
+                   bool* _foundMem,
+                   bool* _foundCPU,
+                   bool* _foundEMC,
+                   bool* _foundGPU,
+                   const std::vector<std::string> _line)
+{
+  
+  for(auto iter = _line.begin(); iter != _line.end(); ++iter)
+  {
+    std::string tokstr = *iter;
+    if( tokstr.compare("RAM") == 0 )
+    {
+      ++iter;
+      if( iter != _line.end() )
+      {
+        std::string memstr = *iter;
+        get_mem_stats(ts, memstr);
+        *_foundMem = true;
+      }
+    }
+    else if( tokstr.compare("CPU") == 0 )
+    {
+      ++iter;
+      if( iter != _line.end() )
+      {
+        std::string cpustr = *iter;
+        get_cpu_stats_tx2(ts, cpustr);
+        *_foundCPU = true;
+      }
+    }
+    else if( tokstr.compare("EMC_FREQ") == 0 )
+    {
+      ++iter;
+      if( iter != _line.end() )
+      {
+        std::string emcstr = *iter;
+        get_emc_stats(ts, emcstr);
+        *_foundEMC = true;
+      }
+    }
+    else if( tokstr.compare("GR3D_FREQ") == 0 )
+    {
+      ++iter;
+      if( iter != _line.end() )
+      {
+        std::string gpustr = *iter;
+        get_gpu_stats(ts, gpustr);
+        *_foundGPU = true;
+      }
+    }
+  } //end: for( ... )  
+}
+
 void get_emc_stats(tegrastats & ts, const std::string & str)
 {
   auto emc_stats = tokenize(str, '@');
   auto emc_usage = emc_stats.at(0);
-  
+
   ts.emc_usage = std::stoi(emc_usage.substr(0, emc_usage.size()-1));
   ts.emc_freq = std::stoi(emc_stats.at(1));
 }
@@ -355,11 +406,17 @@ void write_csv(tegrastats & ts)
 
 void write_csv_header(int numCpus)
 {
-  fprintf(csvFile, "UTC,Mono Time,Mem Usage,Mem Max,GPU Usage,GPU Freq,EMC Usage,EMC Freq");
+  std::ostringstream ss;
+  ss << "UTC,Mono Time";
+  ss << ",Mem Usage,Mem Max";
+  ss << ",GPU Usage,GPU Freq";
+  ss << ",EMC Usage,EMC Freq";
   for(int i=0;i<numCpus;++i)
   {
-    fprintf(csvFile, ",CPU %d Usage,CPU %d Freq",i,i);
+    ss << ",CPU " << i << " Usage,CPU " << i << " Freq";
   }
-  fprintf(csvFile, "\n");
+  ss << std::endl;
+  std::string headerStr = ss.str();
+  fprintf(csvFile, "%s", headerStr.c_str());
   fflush(csvFile);
 }
