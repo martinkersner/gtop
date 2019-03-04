@@ -116,8 +116,10 @@ tegrastats parse_tegrastats(const char * buffer) {
   tegrastats ts;
   auto stats = tokenize(buffer, ' ');
 
-  if (stats.size() >= 15)
+  if (stats.size() >= 15 && stats.size() <30) //Don't have TX* to test.. 
     ts.version = TX1;
+  else if(stats.size() >=30)
+    ts.version = AGX;
   else
     ts.version = TX2;
 
@@ -133,6 +135,10 @@ tegrastats parse_tegrastats(const char * buffer) {
       get_gpu_stats(ts, stats.at(13));
       break;
     case TK1: // TODO
+      break;
+    case AGX:
+      get_cpu_stats_agx(ts, stats.at(5));
+      get_gpu_stats(ts, stats.at(9));
       break;
   }
 
@@ -173,10 +179,31 @@ void get_cpu_stats_tx2(tegrastats & ts, const std::string & str) {
   }
 }
 
+void get_cpu_stats_agx(tegrastats & ts, const std::string & str) {
+  const auto cpu_stats = tokenize(str.substr(1, str.size()-1), ',');
+  const auto at = std::string("@");
+
+  for (const auto & u: cpu_stats) {
+    if (u.length() > 5) {
+      std::size_t found = at.find(u);
+      if (found == std::string::npos) {
+	auto cpu_info = tokenize(u, at.c_str()[0]);
+	ts.cpu_usage.push_back(std::stoi(cpu_info.at(0).substr(0, cpu_info.at(0).size()-1)));
+        ts.cpu_freq.push_back(std::stoi(cpu_info.at(1)));
+      	
+      }
+    }
+    else {
+      ts.cpu_usage.push_back(0);
+      ts.cpu_freq.push_back(0);
+    }
+  }
+}
+
 void get_gpu_stats(tegrastats & ts, const std::string & str) {
   const auto gpu_stats = tokenize(str, '@');
   const auto gpu_usage = gpu_stats.at(0);
-
+  
   ts.gpu_usage = std::stoi(gpu_usage.substr(0, gpu_usage.size()-1));
   ts.gpu_freq = std::stoi(gpu_stats.at(1));
 }

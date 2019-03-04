@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <wordexp.h>
 
-enum jetson_version {TK1, TX1, TX2};
+enum jetson_version {TK1, TX1, TX2, AGX};
 
 struct tegrastats {
   int mem_usage;

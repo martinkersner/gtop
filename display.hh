@@ -32,7 +32,7 @@ const int WIDGET_MAX_COLS_INT8  = 100;
 const float WIDGET_MAX_COLS_F32 = 100.0;
 const float WIDGET_WIDTH     = 0.7;
 
-const int MEM_BUFFER_SIZE    = 20;
+const int MEM_BUFFER_SIZE    = 60;
 const float MEGA2GIGA        = 1000.0;
 
 struct bar {
