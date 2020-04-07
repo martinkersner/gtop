@@ -14,6 +14,7 @@
 const int BAR_OFFSET = 6;
 const int MIN_HEIGHT_USAGE_CHART = 30;
 
+const int COLOR_COUNT = 7;
 enum colors {RED_BLACK=1,
              GREEN_BLACK,
              YELLOW_BLACK,

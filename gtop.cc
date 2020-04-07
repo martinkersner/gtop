@@ -116,10 +116,13 @@ tegrastats parse_tegrastats(const char * buffer) {
   tegrastats ts;
   auto stats = tokenize(buffer, ' ');
 
-  if (stats.size() >= 15)
+  if (stats.size() >= 30) {
+    ts.version = AGX;
+  } else if (stats.size() >= 15) {
     ts.version = TX1;
-  else
+  } else {
     ts.version = TX2;
+  }
 
   get_mem_stats(ts, stats.at(1));
 
@@ -130,6 +133,10 @@ tegrastats parse_tegrastats(const char * buffer) {
       break;
     case TX2:
       get_cpu_stats_tx2(ts, stats.at(5));
+      get_gpu_stats(ts, stats.at(13));
+      break;
+    case AGX:
+      get_cpu_stats_tx2(ts, stats.at(9));
       get_gpu_stats(ts, stats.at(13));
       break;
     case TK1: // TODO
