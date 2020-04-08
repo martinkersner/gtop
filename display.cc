@@ -25,12 +25,13 @@ void display_bars(const int & row, const int & col, const int & val, const int &
 
   mvprintw(row, col+b.max_bar+1, "%3d%%", val);
   display_right_bracket();
-  printw(" %d", freq);
+  printw(" %dHz", freq);
 
   refresh();
 }
 
-void display_bars(const int & row, const int & col, const int & val, const int & current, const int & maximum) {
+void display_power_bars(const int & row, const int & col, const int & current, const int & maximum) {
+    int val = 100 * (static_cast<float>(current) / static_cast<float>(maximum));
     auto b = update_bar_dims(val);
     clear_row(row, col);
 
@@ -39,7 +40,7 @@ void display_bars(const int & row, const int & col, const int & val, const int &
 
     mvprintw(row, col+b.max_bar+1, "%3d%%", val);
     display_right_bracket();
-    printw(" %d/%d", current, maximum);
+    printw(" %d/%dmW", current, maximum);
 
     refresh();
 }
@@ -55,7 +56,7 @@ void display_mem_bars(const int & row, const int & col, const int & val, const i
 
   char buffer[MEM_BUFFER_SIZE];
   sprintf(buffer, "%2.2fG/%2.2fG", mega2giga(val), mega2giga(max_val));
-  mvprintw(row, col+b.max_bar-6, buffer);
+  mvprintw(row, col+b.max_bar-7, buffer);
   display_right_bracket();
   refresh();
 }
@@ -144,9 +145,7 @@ void display_gpu_stats(const int & row, const tegrastats & ts) {
 
 void display_dla_power_stats(const int & row, const tegrastats & ts) {
     mvprintw(row, 0, "CV Pow");
-    display_bars(row, BAR_OFFSET, 100 * (static_cast<float>(ts.dla_power) / static_cast<float>(ts.dla_power_max)),
-            ts.dla_power,
-            ts.dla_power_max);
+    display_power_bars(row, BAR_OFFSET, ts.dla_power, ts.dla_power_max);
 }
 
 void display_mem_stats(const int & row, const tegrastats & ts) {

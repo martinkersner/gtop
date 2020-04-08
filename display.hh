@@ -59,6 +59,8 @@ struct dimensions {
 void display_bars(const int &, const int &, const int &);
 void display_bars(const int &, const int &, const int &, const int &);
 void display_bars(const int &);
+void display_power_bars(const int &, const int &, const int &, const int &);
+
 void display_mem_bars(const int &, const int &, const int &, const int &);
 float mega2giga(const int &);
 bar update_bar_dims(const int &);
