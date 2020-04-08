@@ -30,6 +30,20 @@ void display_bars(const int & row, const int & col, const int & val, const int &
   refresh();
 }
 
+void display_bars(const int & row, const int & col, const int & val, const int & current, const int & maximum) {
+    auto b = update_bar_dims(val);
+    clear_row(row, col);
+
+    display_left_bracket(row, col);
+    display_bars(b.val_bar);
+
+    mvprintw(row, col+b.max_bar+1, "%3d%%", val);
+    display_right_bracket();
+    printw(" %d/%d", current, maximum);
+
+    refresh();
+}
+
 void display_mem_bars(const int & row, const int & col, const int & val, const int & max_val) {
   auto val_norm = int((float(val) / max_val) * 100);
   auto b = update_bar_dims(val_norm);
@@ -130,7 +144,9 @@ void display_gpu_stats(const int & row, const tegrastats & ts) {
 
 void display_dla_power_stats(const int & row, const tegrastats & ts) {
     mvprintw(row, 0, "CV Pow");
-    display_bars(row, BAR_OFFSET, 100 * (static_cast<float>(ts.dla_power) / static_cast<float>(ts.dla_power_max)), ts.dla_power_max);
+    display_bars(row, BAR_OFFSET, 100 * (static_cast<float>(ts.dla_power) / static_cast<float>(ts.dla_power_max)),
+            ts.dla_power,
+            ts.dla_power_max);
 }
 
 void display_mem_stats(const int & row, const tegrastats & ts) {
