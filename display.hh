@@ -11,7 +11,7 @@
 
 #include "utils.hh"
 
-const int BAR_OFFSET = 8;
+const int BAR_OFFSET = 6;
 const int MIN_HEIGHT_USAGE_CHART = 30;
 
 const int COLOR_COUNT = 7;

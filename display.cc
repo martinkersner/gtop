@@ -129,7 +129,7 @@ void display_gpu_stats(const int & row, const tegrastats & ts) {
 }
 
 void display_dla_power_stats(const int & row, const tegrastats & ts) {
-    mvprintw(row, 0, "DLA POW");
+    mvprintw(row, 0, "CV Pow");
     display_bars(row, BAR_OFFSET, 100 * (static_cast<float>(ts.dla_power) / static_cast<float>(ts.dla_power_max)), ts.dla_power_max);
 }
 
