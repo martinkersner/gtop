@@ -22,6 +22,10 @@ struct tegrastats {
   int gpu_usage;
   int gpu_freq;
 
+  int dla_power;
+  int dla_power_avg;
+  int dla_power_max;
+
   jetson_version version;
 };
 

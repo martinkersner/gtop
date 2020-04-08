@@ -11,7 +11,7 @@
 
 #include "utils.hh"
 
-const int BAR_OFFSET = 6;
+const int BAR_OFFSET = 8;
 const int MIN_HEIGHT_USAGE_CHART = 30;
 
 const int COLOR_COUNT = 7;
@@ -69,7 +69,9 @@ void clear_row(const int &, const int &);
 
 void display_cpu_stats(const int &, const tegrastats &);
 void display_gpu_stats(const int &, const tegrastats &);
+void display_dla_power_stats(const int &, const tegrastats &);
 void display_mem_stats(const int &, const tegrastats &);
+
 void display_usage_chart(const int &, const std::vector<std::vector<int>>);
 
 #endif // DISPLAY_HH_

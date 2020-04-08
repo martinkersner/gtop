@@ -11,13 +11,13 @@ bool processed = false;
 bool ready     = false;
 bool finished  = false;
 
-int main() {	
+int main() {
   if (getuid()) {
     std::cout << "gtop requires root privileges!" << std::endl;
     exit(1);
   }
 
-  std::thread t(read_tegrastats); 
+  std::thread t(read_tegrastats);
 
   initscr();
   noecho();
@@ -51,7 +51,7 @@ int main() {
 
     // CPU USAGE CHART
     update_usage_chart(cpu_usage_buffer, t_stats.cpu_usage);
-    display_usage_chart(10, cpu_usage_buffer);
+    display_usage_chart(11, cpu_usage_buffer);
 
 
     lk.unlock();
@@ -62,7 +62,7 @@ int main() {
       break;
   }
 
-  { 
+  {
     std::lock_guard<std::mutex> lk(m);
     finished = true;
   }
@@ -138,6 +138,7 @@ tegrastats parse_tegrastats(const char * buffer) {
     case AGX:
       get_cpu_stats_tx2(ts, stats.at(9));
       get_gpu_stats(ts, stats.at(13));
+      get_dla_power_stats(ts, stats.at(36));
       break;
     case TK1: // TODO
       break;
@@ -196,15 +197,31 @@ void get_mem_stats(tegrastats & ts, const std::string & str) {
   ts.mem_max = std::stoi(mem_max.substr(0, mem_max.size()-2));
 }
 
+void get_dla_power_stats(tegrastats & ts, const std::string & str) {
+    const auto mem_stats = tokenize(str, '/');
+
+    std::cout << mem_stats.at(0) << std::endl;
+    ts.dla_power = std::stoi(mem_stats.at(0));
+    ts.dla_power_avg = std::stoi(mem_stats.at(1));
+    ts.dla_power_max = std::max(ts.dla_power_max, ts.dla_power);
+}
+
 void display_stats(const dimensions & d, const tegrastats & ts) {
   // CPU
   display_cpu_stats(0, ts);
 
   // GPU
-  display_gpu_stats(ts.cpu_usage.size(), ts);
+  int pos = ts.cpu_usage.size();
+  display_gpu_stats(pos, ts);
 
+  if(ts.version == AGX) {
+      pos++;
+      display_dla_power_stats(pos, ts);
+  }
+
+  pos++;
   // Memory
-  display_mem_stats(ts.cpu_usage.size()+1, ts);
+  display_mem_stats(pos, ts);
 }
 
 void update_usage_chart(std::vector<std::vector<int>> & usage_buffer,

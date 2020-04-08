@@ -128,6 +128,11 @@ void display_gpu_stats(const int & row, const tegrastats & ts) {
   display_bars(row, BAR_OFFSET, ts.gpu_usage, ts.gpu_freq);
 }
 
+void display_dla_power_stats(const int & row, const tegrastats & ts) {
+    mvprintw(row, 0, "DLA POW");
+    display_bars(row, BAR_OFFSET, 100 * (static_cast<float>(ts.dla_power) / static_cast<float>(ts.dla_power_max)), ts.dla_power_max);
+}
+
 void display_mem_stats(const int & row, const tegrastats & ts) {
   mvprintw(row, 0, "Mem");
   display_mem_bars(row, BAR_OFFSET, ts.mem_usage, ts.mem_max);
@@ -151,9 +156,9 @@ void display_usage_chart(const int & row, const std::vector<std::vector<int>> cp
       }
        
       int tmp_cpu_usage = int((max_height/100.0)*cpu_usage);
-      attron(COLOR_PAIR(idx));
+      attron(COLOR_PAIR(idx % COLOR_COUNT));
       mvprintw(max_height-tmp_cpu_usage+row, col+3, "*"); 
-      attroff(COLOR_PAIR(idx));
+      attroff(COLOR_PAIR(idx % COLOR_COUNT));
 
       idx++;
     }
