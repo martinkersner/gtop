@@ -166,7 +166,7 @@ void get_cpu_stats_tx2(tegrastats & ts, const std::string & str) {
   const auto at = std::string("@");
 
   for (const auto & u: cpu_stats) {
-    if (u != "off") {
+    if (u != "off" && u != "off]" && u != "[off") {
       std::size_t found = at.find(u);
       if (found == std::string::npos) {
         auto cpu_info = tokenize(u, at.c_str()[0]);
