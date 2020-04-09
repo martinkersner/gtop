@@ -200,7 +200,6 @@ void get_mem_stats(tegrastats & ts, const std::string & str) {
 void get_dla_power_stats(tegrastats & ts, const std::string & str) {
     const auto mem_stats = tokenize(str, '/');
 
-    std::cout << mem_stats.at(0) << std::endl;
     ts.dla_power = std::stoi(mem_stats.at(0));
     ts.dla_power_avg = std::stoi(mem_stats.at(1));
     ts.dla_power_max = std::max(ts.dla_power_max, ts.dla_power);
