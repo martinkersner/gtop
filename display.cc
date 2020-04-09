@@ -25,9 +25,24 @@ void display_bars(const int & row, const int & col, const int & val, const int &
 
   mvprintw(row, col+b.max_bar+1, "%3d%%", val);
   display_right_bracket();
-  printw(" %d", freq);
+  printw(" %dHz", freq);
 
   refresh();
+}
+
+void display_power_bars(const int & row, const int & col, const int & current, const int & maximum) {
+    int val = 100 * (static_cast<float>(current) / static_cast<float>(maximum));
+    auto b = update_bar_dims(val);
+    clear_row(row, col);
+
+    display_left_bracket(row, col);
+    display_bars(b.val_bar);
+
+    mvprintw(row, col+b.max_bar+1, "%3d%%", val);
+    display_right_bracket();
+    printw(" %d/%dmW", current, maximum);
+
+    refresh();
 }
 
 void display_mem_bars(const int & row, const int & col, const int & val, const int & max_val) {
@@ -41,7 +56,7 @@ void display_mem_bars(const int & row, const int & col, const int & val, const i
 
   char buffer[MEM_BUFFER_SIZE];
   sprintf(buffer, "%2.2fG/%2.2fG", mega2giga(val), mega2giga(max_val));
-  mvprintw(row, col+b.max_bar-6, buffer);
+  mvprintw(row, col+b.max_bar-7, buffer);
   display_right_bracket();
   refresh();
 }
@@ -108,13 +123,15 @@ void display_cpu_stats(const int & row, const tegrastats & ts) {
   int idx = 0;
   for (const auto & u : ts.cpu_usage) {
     const auto cpu_label = std::string("CPU ") + std::to_string(idx);
-    attron(COLOR_PAIR(idx+1));
+    attron(COLOR_PAIR((idx+1) % COLOR_COUNT));
     mvprintw(row+idx, 0, cpu_label.c_str());
-    attroff(COLOR_PAIR(idx+1));
+    attroff(COLOR_PAIR((idx+1) % COLOR_COUNT));
 
     if (ts.version == TX1)
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(0));
     else if (ts.version == TX2)
+      display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(idx));
+    else if (ts.version == AGX)
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(idx));
 
     idx++;
@@ -124,6 +141,11 @@ void display_cpu_stats(const int & row, const tegrastats & ts) {
 void display_gpu_stats(const int & row, const tegrastats & ts) {
   mvprintw(row, 0, "GPU");
   display_bars(row, BAR_OFFSET, ts.gpu_usage, ts.gpu_freq);
+}
+
+void display_dla_power_stats(const int & row, const tegrastats & ts) {
+    mvprintw(row, 0, "CV Pow");
+    display_power_bars(row, BAR_OFFSET, ts.dla_power, ts.dla_power_max);
 }
 
 void display_mem_stats(const int & row, const tegrastats & ts) {
@@ -149,9 +171,9 @@ void display_usage_chart(const int & row, const std::vector<std::vector<int>> cp
       }
        
       int tmp_cpu_usage = int((max_height/100.0)*cpu_usage);
-      attron(COLOR_PAIR(idx));
+      attron(COLOR_PAIR(idx % COLOR_COUNT));
       mvprintw(max_height-tmp_cpu_usage+row, col+3, "*"); 
-      attroff(COLOR_PAIR(idx));
+      attroff(COLOR_PAIR(idx % COLOR_COUNT));
 
       idx++;
     }

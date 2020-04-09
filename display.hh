@@ -14,6 +14,7 @@
 const int BAR_OFFSET = 6;
 const int MIN_HEIGHT_USAGE_CHART = 30;
 
+const int COLOR_COUNT = 7;
 enum colors {RED_BLACK=1,
              GREEN_BLACK,
              YELLOW_BLACK,
@@ -58,6 +59,8 @@ struct dimensions {
 void display_bars(const int &, const int &, const int &);
 void display_bars(const int &, const int &, const int &, const int &);
 void display_bars(const int &);
+void display_power_bars(const int &, const int &, const int &, const int &);
+
 void display_mem_bars(const int &, const int &, const int &, const int &);
 float mega2giga(const int &);
 bar update_bar_dims(const int &);
@@ -68,7 +71,9 @@ void clear_row(const int &, const int &);
 
 void display_cpu_stats(const int &, const tegrastats &);
 void display_gpu_stats(const int &, const tegrastats &);
+void display_dla_power_stats(const int &, const tegrastats &);
 void display_mem_stats(const int &, const tegrastats &);
+
 void display_usage_chart(const int &, const std::vector<std::vector<int>>);
 
 #endif // DISPLAY_HH_
