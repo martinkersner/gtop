@@ -27,7 +27,7 @@ const std::string TEGRASTATS_PATH     = "/usr/bin/tegrastats";
 const std::string TEGRASTATSFAKE_PATH = "./tegrastats_fake";
 
 void read_tegrastats();
-tegrastats parse_tegrastats(const char *);
+void parse_tegrastats(const char * buffer, tegrastats &ts);
 
 void get_cpu_stats_tx1(tegrastats &, const std::string &);
 void get_cpu_stats_tx2(tegrastats &, const std::string &);

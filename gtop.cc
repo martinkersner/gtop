@@ -104,7 +104,7 @@ void read_tegrastats() {
 
       cv.wait(lk, []{ return ready; });
       ready = false;
-      t_stats = parse_tegrastats(buffer.data());
+      parse_tegrastats(buffer.data(), t_stats);
       processed = true;
       lk.unlock();
       cv.notify_one();
@@ -112,8 +112,10 @@ void read_tegrastats() {
   }
 }
 
-tegrastats parse_tegrastats(const char * buffer) {
-  tegrastats ts;
+void parse_tegrastats(const char * buffer, tegrastats &ts) {
+
+  ts.cpu_freq.clear();
+  ts.cpu_usage.clear();
   auto stats = tokenize(buffer, ' ');
 
   if (stats.size() >= 30) {
@@ -143,8 +145,6 @@ tegrastats parse_tegrastats(const char * buffer) {
     case TK1: // TODO
       break;
   }
-
-  return ts;
 }
 
 void get_cpu_stats_tx1(tegrastats & ts, const std::string & str) {
