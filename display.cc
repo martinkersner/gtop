@@ -114,7 +114,7 @@ void display_cpu_stats(const int & row, const tegrastats & ts) {
 
     if (ts.version == TX1)
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(0));
-    else if (ts.version == TX2)
+    else // TX2, AGX
       display_bars(row+idx, BAR_OFFSET, u, ts.cpu_freq.at(idx));
 
     idx++;
